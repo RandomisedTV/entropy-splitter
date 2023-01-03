@@ -1,5 +1,7 @@
 # entropy-splitter
-An autosplitter for **The Entropy Centre**. Currently works on v1.0.7 and v1.0.11
+An autosplitter for **The Entropy Centre**. 
+
+Currently works on v1.0.7 and v1.0.11.
 
 Timer **starts** upon starting a New Game or upon starting a chapter from the Chapter Select.
 
