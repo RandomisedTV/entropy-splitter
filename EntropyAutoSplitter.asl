@@ -60,7 +60,7 @@ init
 start
 {
     if(settings["CLs"]){
-        return current.customlevelValue==9;
+        return current.customlevelValue==9 && current.loadCheck == 0x01010101;
     }
     else if(old.loadCheck == 0x00010000 && current.loadCheck == 0x01010101){
         return true;
@@ -76,10 +76,10 @@ reset
 
 split
 {
-    if(current.actId != old.actId){
-        return true;
+    if(settings["CLs"]){
+        return current.customlevelValue==10 && old.customlevelValue==9;
     }
-    if(settings["CLs"] && current.customlevelValue==10 && old.customlevelValue==9){
+    else if(current.actId != old.actId){
         return true;
     }
 }
