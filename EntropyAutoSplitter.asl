@@ -29,6 +29,8 @@ customlevelValue:
 
 startup
 {
+	vars.timerModel = new TimerModel { CurrentState = timer };
+	vars.closedGame = 0;
     settings.Add("CLs", false, "Custom Level Timing");
     settings.SetToolTip("CLs", "Time starts upon entering any custom level, and ends when completing it. Disables the normal timer.");
 
@@ -45,6 +47,10 @@ startup
 
 init
 {
+	if (vars.closedGame == 1)
+	{
+		vars.timerModel.UndoSplit();
+	}
     int moduleSize = modules.First().ModuleMemorySize;
     switch(moduleSize)
     {
@@ -60,9 +66,11 @@ init
 start
 {
     if(settings["CLs"]){
+		vars.closedGame = 0;
         return current.customlevelValue==9 && current.loadCheck == 0x01010101;
     }
     else if(old.loadCheck == 0x00010000 && current.loadCheck == 0x01010101){
+		vars.closedGame = 0;
         return true;
     }
 }
@@ -79,17 +87,30 @@ split
     if(settings["CLs"]){
         return current.customlevelValue==10 && old.customlevelValue==9;
     }
-    else if(current.actId != old.actId){
+    else if(current.actId != old.actId && vars.closedGame != 1){
         return true;
     }
+	else if(vars.closedGame == 2) {
+		vars.closedGame = 0;
+		old.actId = current.actId;
+		return false;
+	}
 }
 
 isLoading
 {
     if(current.loadCheck == 0x01010101){
+		if (vars.closedGame == 1) {
+			vars.closedGame = 2;
+		}
         return false;
     }
     else{
         return true;
     }
+}
+
+exit
+{
+	vars.closedGame = 1;
 }
