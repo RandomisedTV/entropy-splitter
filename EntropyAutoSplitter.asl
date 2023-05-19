@@ -31,7 +31,9 @@ startup
 {
     settings.Add("CLs", false, "Custom Level Timing");
     settings.SetToolTip("CLs", "Time starts upon entering any custom level, and ends when completing it. Disables the normal timer.");
-
+    
+    vars.crash = 0;
+    
     if(timer.CurrentTimingMethod == TimingMethod.RealTime){
         var mbox = MessageBox.Show(
             "To remove load/pause time, you must be comparing to game time rather than real time. Would you like to switch to game time?",
@@ -79,17 +81,28 @@ split
     if(settings["CLs"]){
         return current.customlevelValue==10 && old.customlevelValue==9;
     }
-    else if(current.actId != old.actId){
-        return true;
+    else if(current.actId != old.actId && (current.loadCheck == 0x00010101 || current.loadCheck == 0x00010000)){
+        return vars.crash == 0;
+    }
+    if(vars.crash == 1 && old.loadCheck == 0x00010000 && current.loadCheck == 0x01010101){
+        vars.crash = 0;
     }
 }
 
 isLoading
 {
-    if(current.loadCheck == 0x01010101){
+    if(current.loadCheck == 0x01010101 && vars.crash == 0){
         return false;
     }
     else{
         return true;
     }
+    if(vars.crash = 1){
+        return true;
+    }
+}
+
+exit
+{
+    vars.crash = 1;
 }
