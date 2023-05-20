@@ -81,7 +81,7 @@ split
     if(settings["CLs"]){
         return current.customlevelValue==10 && old.customlevelValue==9;
     }
-    else if(current.actId != old.actId && (current.loadCheck == 0x00010101 || current.loadCheck == 0x00010000)){
+    else if(current.actId != old.actId){
         return vars.crash == 0;
     }
     if(vars.crash == 1 && old.loadCheck == 0x00010000 && current.loadCheck == 0x01010101){
