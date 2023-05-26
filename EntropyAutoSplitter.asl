@@ -19,8 +19,6 @@ startup
     settings.Add("FullReset", true, "Fullgame Resetting");
     settings.Add("AnyReset", false, "IL Resetting");
 
-    vars.crash = 0;
-
     if(timer.CurrentTimingMethod==TimingMethod.RealTime){
         var mbox = MessageBox.Show(
             "To remove load/pause time, you must be comparing to game time rather than real time. Would you like to switch to game time?",
@@ -30,6 +28,7 @@ startup
         if(mbox==DialogResult.Yes)
             timer.CurrentTimingMethod = TimingMethod.GameTime;
     }
+    vars.doneMaps = new List<string>(){"Menu/MainMenu",null}; // to prevent quitting and continuing causing a split
 }
 
 init
@@ -48,23 +47,22 @@ init
 
 onReset
 {
-    vars.crash = 0;
+    vars.doneMaps.Clear();
 }
 
 start
 {
-    return current.map!="EditorMainMenu" && current.load==0x01010101 && old.load==0x00010000; // editormainmenu is excluded so that when playing custom levels the timer doesn't start upon entering the hub
+    if(current.map!="EditorMainMenu" && current.load==0x01010101 && old.load==0x00010000){ // editormainmenu is excluded so that when playing custom levels the timer doesn't start upon entering the hub
+        vars.doneMaps.Add(current.map);
+        return true;
+    }
 }
 
 split
 {
-    if(current.map!=old.map && current.map!="Menu/MainMenu"){
-        if(vars.crash==1){
-            vars.crash = 0;
-        }
-        else{
-            return true;
-        }
+    if(current.map!=old.map && !vars.doneMaps.Contains(current.map)){
+        vars.doneMaps.Add(current.map);
+        return true;
     }
     return old.load==0x01010101 && current.load==0x01010000 && !current.pause && current.map=="_CustomLevelLoad"; // splitting when completing a custom level
 }
@@ -84,15 +82,15 @@ reset
 
 isLoading
 {
-    if(current.load==0x00010101 || current.load==0x00010000 || current.pause || vars.crash==1){
+    if(current.load==0x00010101 || current.load==0x00010000 || current.pause || current.map=="Menu/MainMenu" || current.map==null){
         return true;
     }
-    if(current.load==0x01010101 || (!current.pause && current.map!="Menu/MainMenu")){
+    if(current.load==0x01010101 || !current.pause){
         return false;
     }
 }
 
-exit // in theory checking if the map string is null would be better than this, but an actual crash never causes it to be null unlike every other method of exiting the game (including alt f4)
+exit // for crashes - in theory checking if the map string is null would be better than this, but an actual crash never causes it to be null unlike every other method of exiting the game (including alt f4)
 {
-    vars.crash = 1;
+    timer.IsGameTimePaused = true;
 }
