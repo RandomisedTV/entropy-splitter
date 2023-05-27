@@ -1,3 +1,5 @@
+# entropy-splitter
+
 Autosplitter for **The Entropy Centre**
 
 - Supports all versions
