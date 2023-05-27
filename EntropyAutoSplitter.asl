@@ -2,14 +2,14 @@
 // pause = true - paused, false - unpaused (necessary for not timing false pauses)
 state("EntropyCentre-Win64-Shipping","v1.0.X")
 {
-    string52 map: 0x0512E4F0, 0x118, 0xA0, 0xD0, 0x8B0, 0X38;
+    string52 map: 0x04CA8E28, 0x30, 0x20, 0x30, 0xF8, 0x38;
     int load: 0x04FDC638, 0x5B0, 0x20, 0x50, 0xA0;
     bool pause: 0x04FD95A0, 0xFD0, 0x20, 0x8A8;
 }
 
 state("EntropyCentre-Win64-Shipping", "v1.1.X")
 {
-    string52 map: 0x051849E8, 0x10, 0x260, 0x30, 0xF8, 0x38;
+    string52 map: 0x0524E5D0, 0x370, 0x30, 0xF8, 0x38;
     int load: 0x05661F70, 0xE8, 0x8, 0xA0;
     bool pause: 0x056760F8, 0x8A8;
 }
@@ -28,7 +28,7 @@ startup
         if(mbox==DialogResult.Yes)
             timer.CurrentTimingMethod = TimingMethod.GameTime;
     }
-    vars.doneMaps = new List<string>(){"Menu/MainMenu",null}; // to prevent quitting and continuing causing a split
+    vars.doneMaps = new List<string>(); // to prevent quitting and continuing causing a split
 }
 
 init
@@ -45,15 +45,13 @@ init
     }
 }
 
-onReset
-{
-    vars.doneMaps.Clear();
-}
-
 start
 {
     if(current.map!="EditorMainMenu" && current.load==0x01010101 && old.load==0x00010000){ // editormainmenu is excluded so that when playing custom levels the timer doesn't start upon entering the hub
-        vars.doneMaps.Add(current.map);
+        vars.doneMaps.Clear();
+        vars.doneMaps.Add("Menu/MainMenu");
+        vars.doneMaps.Add(null);
+        vars.doneMaps.Add(current.map); // theres probably a better way to do this than adding all 3? main menu & null should ideally never be deleted from the list but clearing the list will obviously get rid of them
         return true;
     }
 }
