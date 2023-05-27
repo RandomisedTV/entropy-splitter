@@ -80,12 +80,7 @@ reset
 
 isLoading
 {
-    if(current.load==0x00010101 || current.load==0x00010000 || current.pause || current.map=="Menu/MainMenu" || current.map==null){
-        return true;
-    }
-    if(current.load==0x01010101 || !current.pause){
-        return false;
-    }
+    return current.load==0x00010101 || current.load==0x00010000 || current.pause || current.map=="Menu/MainMenu" || current.map==null;
 }
 
 exit // for crashes - in theory checking if the map string is null would be better than this, but an actual crash never causes it to be null unlike every other method of exiting the game (including alt f4)
