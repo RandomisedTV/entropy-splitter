@@ -16,9 +16,6 @@ state("EntropyCentre-Win64-Shipping", "v1.1.X")
 
 startup
 {
-    settings.Add("FullReset", true, "Fullgame Resetting");
-    settings.Add("AnyReset", false, "IL Resetting");
-
     if(timer.CurrentTimingMethod==TimingMethod.RealTime){
         var mbox = MessageBox.Show(
             "To remove load/pause time, you must be comparing to game time rather than real time. Would you like to switch to game time?",
@@ -67,14 +64,6 @@ split
 
 reset
 {
-    if(old.map=="Menu/MainMenu" && current.map!=old.map){
-        if(settings["FullReset"] && current.map=="ter_01/Chapter_01_Level_00" || current.map=="ter_01/Chapter_01_Level_01"){
-            return true;
-        }
-        if(settings["AnyReset"]){
-            return true;
-        }
-    }
     return current.map=="_CustomLevelLoad" && current.load==0x00010000; // custom level resetting
 }
 
