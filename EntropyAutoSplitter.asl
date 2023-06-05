@@ -1,48 +1,31 @@
+// load = 0x01010000 - paused or main menu, 0x01010101 - unpaused, 0x00010101 - level -> level load, 0x00010000 - menu -> level load , level -> menu load & other
+// pause = true - paused, false - unpaused (necessary for not timing false pauses)
 state("EntropyCentre-Win64-Shipping","v1.0.X")
 {
-    int loadCheck: 0x04FDC638, 0x5B0, 0x20, 0x50, 0xA0;
-    int actId: 0x050F27A0, 0x7F0, 0x190, 0x20, 0x8B0, 0x68;
+    string52 map: 0x04CA8E28, 0x30, 0x20, 0x30, 0xF8, 0x38;
+    int load: 0x04FDC638, 0x5B0, 0x20, 0x50, 0xA0;
+    bool pause: 0x04FD95A0, 0xFD0, 0x20, 0x8A8;
 }
 
-state("EntropyCentre-Win64-Shipping","v1.1.X")
+state("EntropyCentre-Win64-Shipping", "v1.1.X")
 {
-    int loadCheck: 0x05661F70, 0xE8, 0x8, 0xA0;
-    int actId: 0x05676110, 0x58, 0x30, 0xF8, 0x68;
-    int customlevelValue: 0x05676110, 0xE8, 0x280;
+    string52 map: 0x0524E5D0, 0x370, 0x30, 0xF8, 0x38;
+    int load: 0x05661F70, 0xE8, 0x8, 0xA0;
+    bool pause: 0x056760F8, 0x8A8;
 }
-
-/*
-loadCheck:
-0x01010000 - paused or main menu
-0x01010101 - unpaused
-0x00010101 - level -> level load
-0x00010000 - menu -> level or level -> menu load
-actId:
-0x00000073 - credits
-0x003U003T - act number, where U is the unit & T is the tens (e.g. act 12 = 0x00320031)
-customlevelValue:
-0 - loading
-2 - not in custom level
-9 - in custom level
-10 - on level end screen
-*/
 
 startup
 {
-    settings.Add("CLs", false, "Custom Level Timing");
-    settings.SetToolTip("CLs", "Time starts upon entering any custom level, and ends when completing it. Disables the normal timer.");
-    
-    vars.crash = 0;
-    
-    if(timer.CurrentTimingMethod == TimingMethod.RealTime){
+    if(timer.CurrentTimingMethod==TimingMethod.RealTime){
         var mbox = MessageBox.Show(
             "To remove load/pause time, you must be comparing to game time rather than real time. Would you like to switch to game time?",
             "The Entropy Centre Autosplitter",
             MessageBoxButtons.YesNo);
 
-        if(mbox == DialogResult.Yes)
+        if(mbox==DialogResult.Yes)
             timer.CurrentTimingMethod = TimingMethod.GameTime;
     }
+    vars.doneMaps = new List<string>(); // to prevent quitting and continuing causing a split
 }
 
 init
@@ -61,48 +44,35 @@ init
 
 start
 {
-    if(settings["CLs"]){
-        return current.customlevelValue==9 && current.loadCheck == 0x01010101;
-    }
-    else if(old.loadCheck == 0x00010000 && current.loadCheck == 0x01010101){
-        return true;
-    }
-}
-
-reset
-{
-    if(settings["CLs"] && current.customlevelValue==0){
+    if(current.map!="EditorMainMenu" && current.load==0x01010101 && old.load==0x00010000){ // editormainmenu is excluded so that when playing custom levels the timer doesn't start upon entering the hub
+        vars.doneMaps.Clear();
+        vars.doneMaps.Add("Menu/MainMenu");
+        vars.doneMaps.Add(null);
+        vars.doneMaps.Add(current.map); // theres probably a better way to do this than adding all 3? main menu & null should ideally never be deleted from the list but clearing the list will obviously get rid of them
         return true;
     }
 }
 
 split
 {
-    if(settings["CLs"]){
-        return current.customlevelValue==10 && old.customlevelValue==9;
+    if(current.map!=old.map && !vars.doneMaps.Contains(current.map)){
+        vars.doneMaps.Add(current.map);
+        return true;
     }
-    else if(current.actId != old.actId && (current.loadCheck == 0x00010101 || current.loadCheck == 0x00010000)){
-        return vars.crash == 0;
-    }
-    if(vars.crash == 1 && old.loadCheck == 0x00010000 && current.loadCheck == 0x01010101){
-        vars.crash = 0;
-    }
+    return old.load==0x01010101 && current.load==0x01010000 && !current.pause && current.map=="_CustomLevelLoad"; // splitting when completing a custom level
+}
+
+reset
+{
+    return current.map=="_CustomLevelLoad" && current.load==0x00010000; // custom level resetting
 }
 
 isLoading
 {
-    if(current.loadCheck == 0x01010101 && vars.crash == 0){
-        return false;
-    }
-    else{
-        return true;
-    }
-    if(vars.crash = 1){
-        return true;
-    }
+    return current.load==0x00010101 || current.load==0x00010000 || current.pause || current.map=="Menu/MainMenu" || current.map==null;
 }
 
-exit
+exit // for crashes - in theory checking if the map string is null would be better than this, but an actual crash never causes it to be null unlike every other method of exiting the game (including alt f4)
 {
-    vars.crash = 1;
+    timer.IsGameTimePaused = true;
 }
